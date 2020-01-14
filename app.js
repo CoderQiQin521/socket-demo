@@ -54,8 +54,8 @@ io.on('connection', socket => {
 
 var port = process.env.PORT || 3000
 
-http.listen(port, function () {
+http.listen(port, 'localhost', function () {
   var host = http.address().address
-  // var port = http.address().port
+  var port = http.address().port
   console.log('服务已启动, http://%s:%s', host, port);
 })

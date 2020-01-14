@@ -26,11 +26,24 @@
     }
 
     .time {
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
 
     .box-card {
+      padding: 10px;
       margin-bottom: 15px;
+    }
+
+    .el-card__body {
+      padding: 0;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .jc-between {
+      justify-content: space-between;
     }
   </style>
 </head>
@@ -38,17 +51,21 @@
 <body>
   <div id="app">
     <template v-if="!isLogin">
-      <el-form class="demo-ruleForm" @submit.native.prevent="signup">
+      <el-form class="demo-ruleForm" style="margin-top: 60px;" @submit.native.prevent="signup">
         <el-form-item label="用户名">
           <el-input type="text" v-model="username"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" native-type="submit">登录</el-button>
+          <el-button type="primary" style="display: block;width:100%" native-type="submit">登录</el-button>
         </el-form-item>
       </el-form>
     </template>
     <template v-else>
-      <h3>聊天室({{userList.length}})
+      <h3 class="flex jc-between">
+        <span>
+
+          聊天室({{userList.length}})
+        </span>
         <small>当前用户: {{username}}</small>
       </h3>
       <small>博客: <a href="https://coderqiqin521.github.io">https://coderqiqin521.github.io</a></small>
@@ -56,7 +73,7 @@
       <div class="container" ref="container">
         <div v-for="item in messageList">
           <div class="time" style="display: flex;justify-content: space-between;">
-            <span style="font-weight: bold;">{{item.username}}</span>
+            <span style="font-weight: bold;font-size: 14px;">{{item.username}}</span>
             <span style="color: #999;font-size:12px;">{{item.time}}</span>
           </div>
           <el-card class="box-card" shadow="nerver">

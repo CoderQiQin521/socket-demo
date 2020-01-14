@@ -4,31 +4,36 @@ const io = require('socket.io')(http)
 
 const moment = require('moment')
 
-const userList = []
-
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/index.html')
 })
 
-
 /* ----------------------------------- 聊天 ----------------------------------- */
+let onlineUsers = []
 
 io.on('connection', socket => {
   console.log('连接成功');
-
-  let username = null
-
-  socket.on('signups', res => {
+  socket.on('login', res => {
     console.log('res: ', res);
-    userList.push({
-      username: res.username
+    let { uid, username } = res
+    socket.uid = uid
+    onlineUsers.push({
+      uid,
+      username
     })
-    username = res.username
-    // socket.emit('add', res)
-    io.emit('signsuccess', {
+    io.emit('login', {
       user: res,
-      userList: userList
+      onlineUsers
     })
+    // userList.push({
+    //   username: res.username
+    // })
+    // username = res.username
+    // // socket.emit('add', res)
+    // io.emit('signsuccess', {
+    //   user: res,
+    //   userList: userList
+    // })
 
   })
 
@@ -39,12 +44,19 @@ io.on('connection', socket => {
   })
 
   socket.on('disconnect', () => {
-    userList.map((item, index) => {
-      if (item.username === username) {
-        userList.splice(index, 1)
+    // userList.map((item, index) => {
+    //   if (item.username === username) {
+    //     userList.splice(index, 1)
+    //   }
+    // })
+    let user
+    onlineUsers.forEach((item, index) => {
+      if (item.uid === socket.uid) {
+        user = item
+        onlineUsers.splice(index, 1)
       }
     })
-    io.emit('live', { username: username, userList })
+    io.emit('live', { onlineUsers, user })
   })
 
   socket.to('test', () => {
@@ -54,8 +66,8 @@ io.on('connection', socket => {
 
 var port = process.env.PORT || 3000
 
-http.listen(port, function () {
+http.listen(port, 'localhost', function () {
   var host = http.address().address
-  // var port = http.address().port
+  var port = http.address().port
   console.log('服务已启动, http://%s:%s', host, port);
 })

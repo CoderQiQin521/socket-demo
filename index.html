@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>聊天</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+  <!-- 引入组件库 -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <style>
+    .container {
+      padding: 10px 15px;
+      height: 400px;
+      margin-bottom: 30px;
+      font-size: inherit;
+      color: #606266;
+      background-color: #FFF;
+      background-image: none;
+      border: 1px solid #DCDFE6;
+      border-radius: 4px;
+      overflow-y: scroll;
+    }
+
+    .time {
+      margin-bottom: 10px;
+    }
+
+    .box-card {
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <template v-if="!isLogin">
+      <el-form class="demo-ruleForm" @submit.native.prevent="signup">
+        <el-form-item label="用户名">
+          <el-input type="text" v-model="username"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" native-type="submit">登录</el-button>
+        </el-form-item>
+      </el-form>
+    </template>
+    <template v-else>
+      <h3>聊天室({{userList.length}})
+        <small>当前用户: {{username}}</small>
+      </h3>
+      <small>博客: <a href="https://coderqiqin521.github.io">https://coderqiqin521.github.io</a></small>
+
+      <div class="container" ref="container">
+        <div v-for="item in messageList">
+          <div class="time" style="display: flex;justify-content: space-between;">
+            <span style="font-weight: bold;">{{item.username}}</span>
+            <span style="color: #999;font-size:12px;">{{item.time}}</span>
+          </div>
+          <el-card class="box-card" shadow="nerver">
+            {{item.msg}}
+          </el-card>
+        </div>
+      </div>
+      <div @keyup.enter="sendMessage">
+        <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea">
+      </div>
+      </el-input>
+      <el-button style="margin-top: 5px;" type="success" @click="sendMessage">发送</el-button>
+      <!-- <el-button @click="join">加入房间</el-button> -->
+    </template>
+  </div>
+  <script src="https://cdn.bootcss.com/socket.io/2.3.0/socket.io.js"></script>
+  <script src="https://cdn.bootcss.com/moment.js/2.24.0/moment.min.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          socket: null,
+          isLogin: false,
+          textarea: '',
+          messageList: [],
+          userList: [],
+          username: ''
+        }
+      },
+      created() {
+        this.socket = io.connect()
+        this.socket.on('signsuccess', res => {
+          console.log('signsuccess: ', res);
+          this.userList = res.userList
+          if (this.isLogin) {
+
+            this.$message({
+              message: `欢迎,${res.user.username} 加入群聊`,
+              type: 'success'
+            });
+          }
+
+        })
+
+        // 新人加入提醒
+        this.socket.on('add', res => {
+          console.log('add: ', res);
+          this.$message({
+            message: `欢迎,${res.username}加入群聊`,
+            type: 'success'
+          });
+
+        })
+        // // 监听来自服务端的消息
+        this.socket.on('serve', (msg) => {
+          console.log('msg: ', msg);
+          this.messageList.push({
+            username: msg.username,
+            time: msg.time,
+            msg: msg.data.trim()
+          })
+          let container = this.$refs.container
+          this.$nextTick(() => {
+            container.scrollTop = container.scrollHeight
+
+          })
+        });
+
+        // 监听退出
+        this.socket.on('live', ({ username, userList }) => {
+          this.$message({
+            message: `${username} 退出了群聊`,
+            type: 'info'
+          });
+          console.log('userList: ', userList);
+          this.userList = userList
+        })
+      },
+      methods: {
+        signup() {
+          let username = this.username.trim()
+          if (!username) return
+          this.socket.emit('signups', { username: username })
+          this.isLogin = true
+        },
+        join() {
+          // this.socket.join('test')
+        },
+        sendMessage() {
+          if (this.textarea.trim() === '') return
+          // 客户端发送请求
+          this.socket.emit('cli', { username: this.username, data: this.textarea.trim() })
+          this.textarea = ''
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
